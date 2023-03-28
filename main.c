@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 	status = cublasCreate(&handler);
 
 	clock_t start = clock();
-#pragma acc enter data copyin(arr[0:size],arr_new[0:size], error){
+#pragma acc enter data copyin(arr[0:size],arr_new[0:size], error)
 	for (; ((iter < ITER_MAX) && (error > accuracy)); iter++) {
 #pragma acc data present(array,arraynew, error)
 #pragma acc parallel loop independent collapse(2) vector vector_length(256) gang num_gangs(256) reduction(max:error) async(1)
@@ -80,9 +80,9 @@ int main(int argc, char** argv) {
 	}
 
 	clock_t end = clock();
-	printf("%lf\n", 1.0 * (end - start) / CLOCKS_PER_SEC); 
-	}
 	printf("%0.15lf, %d\n", error, iter);
+	printf("%lf\n", 1.0 * (end - start) / CLOCKS_PER_SEC); 
+	
 	
 
 
