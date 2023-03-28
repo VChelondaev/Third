@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
 
 	free(arr);
 	free(arr_new);
-	cublasDestroy(handle);
+	cublasDestroy(handler);
 
 	return 0;
 }
