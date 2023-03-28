@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
 	for (; ((iter < ITER_MAX) && (error > accuracy)); iter++) {
 		double alpha = -1.0;
 		int idx = 0;
-	#pragma acc data present(array,arraynew)
+	#pragma acc data present(arr,arr_new)
 	#pragma acc parallel loop independent collapse(2) vector vector_length(256) gang num_gangs(256) async
 		for (int i = 1; i < N - 1; i++) {
 			for (int j = 1; j < N - 1; j++) {
