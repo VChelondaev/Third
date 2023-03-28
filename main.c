@@ -39,8 +39,7 @@ int main(int argc, char** argv) {
 	memcpy(arr_new, arr, N * N * sizeof(double));
 
 	int size = N * N;
-	int iter = 0, idx = 0;
-	double alpha = -1.0;
+	int iter = 0;
 	double error = 1.0;
 
 	cublasHandle_t handler;
@@ -55,7 +54,7 @@ int main(int argc, char** argv) {
 		double alpha = -1.0;
 		int idx = 0;
 	#pragma acc data present(arr,arr_new)
-	#pragma acc parallel loop independent collapse(2) vector vector_length(256) gang num_gangs(256) async
+	#pragma acc parallel loop independent collapse(2) vector vector_length(256) gang num_gangs(256)
 		for (int i = 1; i < N - 1; i++) {
 			for (int j = 1; j < N - 1; j++) {
 				int n = i * N + j;
@@ -63,7 +62,7 @@ int main(int argc, char** argv) {
 			}
 		}
 		if (iter % 100 == 0) {
-#pragma acc data present (arr, arr_new) wait
+#pragma acc data present (arr, arr_new) 
 #pragma acc host_data use_device(arr, arr_new)
 			{
 				status = cublasDaxpy(handler, size, &alpha, arr_new, 1, arr, 1);
