@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
 	double* arr = (double*)calloc(N * N, sizeof(double));
 	double* arr_new = (double*)calloc(N * N, sizeof(double));
 	double step = 10.0 / (N-1);
-	double error = 1.0;
+	
 
 	arr[0] = 10;
 	arr[N-1] = 20;
@@ -42,6 +42,7 @@ int main(int argc, char** argv) {
 	int size = N * N;
 	int iter = 0, idx = 0;
 	double alpha = -1.0;
+	double error = 1.0;
 
 	cublasHandle_t handler;
 	cublasStatus_t status;
@@ -49,7 +50,7 @@ int main(int argc, char** argv) {
 	status = cublasCreate(&handler);
 
 	clock_t start = clock();
-#pragma acc enter data copyin(arr[0:size],arr_new[0:size], error)
+#pragma acc enter data copyin(arr[0:size],arr_new[0:size])
 	for (; ((iter < ITER_MAX) && (error > accuracy)); iter++) {
 #pragma acc data present(array,arraynew, error)
 #pragma acc parallel loop independent collapse(2) vector vector_length(256) gang num_gangs(256) reduction(max:error) async(1)
