@@ -45,48 +45,45 @@ int main(int argc, char** argv) {
 
 	cublasHandle_t handler;
 	cublasStatus_t status;
-	cudaError err;
 
 	status = cublasCreate(&handler);
 
 	clock_t start = clock();
-	#pragma acc enter data copyin(arr[0:size],arr_new[0:size], error)
-	for (; ((iter < ITER_MAX) && (error > accuracy)) ; iter++) {
-#pragma acc update device (error) async(1)
-		#pragma acc data present(array,arraynew, error)
-		#pragma acc parallel loop independent collapse(2) vector vector_length(256) gang num_gangs(256) reduction(max:error) async(1)
-		for (int i = 1; i < N-1; i++) {
-			for (int j = 1; j < N-1; j++) {
+#pragma acc enter data copyin(arr[0:size],arr_new[0:size], error){
+	for (; ((iter < ITER_MAX) && (error > accuracy)); iter++) {
+#pragma acc data present(array,arraynew, error)
+#pragma acc parallel loop independent collapse(2) vector vector_length(256) gang num_gangs(256) reduction(max:error) async(1)
+		for (int i = 1; i < N - 1; i++) {
+			for (int j = 1; j < N - 1; j++) {
 				int n = i * N + j;
 				arr_new[n] = 0.25 * (arr[n - 1] + arr[n + 1] + arr[(i - 1) * N + j] + arr[(i + 1) * N + j]);
-				error = fmax(error, (arr_new[n] - arr[n]));
 			}
-			
 		}
 		if (iter % 100 == 0) {
 #pragma acc data present (arr, arr_new) wait
 #pragma acc host_data use_device(arr, arr_new)
 			{
 				status = cublasDaxpy(handler, size, &alpha, arr_new, 1, arr, 1);
-				status = cublasIdamax(handler,size, arr, 1, &idx);
+				status = cublasIdamax(handler, size, arr, 1, &idx);
 			}
 
 #pragma acc update host(arr[idx - 1]) 
 			error = abs(arr[idx - 1]);
-	
+
 #pragma acc host_data use_device(arr, arr_new)
 			status = cublasDcopy(handler, size, arr_new, 1, arr, 1);
 		}
-		#pragma acc update host(error) async(1)
-#pragma acc wait(1)
+
 		double* temp = arr;
 		arr = arr_new;
 		arr_new = temp;
 	}
-	clock_t end = clock();
 
+	clock_t end = clock();
+	printf("%lf\n", 1.0 * (end - start) / CLOCKS_PER_SEC); 
+	}
 	printf("%0.15lf, %d\n", error, iter);
-	printf("%lf\n", 1.0 * (end - start) / CLOCKS_PER_SEC);
+	
 
 
 	free(arr);
