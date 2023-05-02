@@ -48,31 +48,31 @@ int main(int argc, char** argv) {
 	status = cublasCreate(&handler);
 
 	clock_t start = clock();
-#pragma acc enter data copyin(arr[0:size],arr_new[0:size])
+#pragma acc enter data copyin(arr[0:size],arr_new[0:size])   //Выделение и копирование памяти на видеокарту
 	{
-	for (; ((iter < ITER_MAX) && (error > accuracy)); iter++) {
+	for (; ((iter < ITER_MAX) && (error > accuracy)); iter++) {  //Условия выполнения кода
 		double alpha = -1.0;
 		int idx = 0;
-	#pragma acc data present(arr,arr_new)
-	#pragma acc parallel loop independent collapse(2) vector vector_length(256) gang num_gangs(256)
-		for (int i = 1; i < N - 1; i++) {
-			for (int j = 1; j < N - 1; j++) {
-				int n = i * N + j;
+	#pragma acc data present(arr,arr_new)  //Обновление указателей
+	#pragma acc parallel loop independent collapse(2) vector vector_length(256) gang num_gangs(256)                          // "acc parallel loop"  распараллеливаем,
+		for (int i = 1; i < N - 1; i++) {                                                                               // "independent" говорим, что циклы независимы, 
+			for (int j = 1; j < N - 1; j++) {                                                                      // "collapse(2)" разворачиваем циклы, 
+				int n = i * N + j;                                                      
 				arr_new[n] = 0.25 * (arr[n - 1] + arr[n + 1] + arr[(i - 1) * N + j] + arr[(i + 1) * N + j]);
 			}
 		}
 		if (iter % 100 == 0) {
-#pragma acc data present (arr, arr_new) 
-#pragma acc host_data use_device(arr, arr_new)
+#pragma acc data present (arr, arr_new)                     //Обновление указателей
+#pragma acc host_data use_device(arr, arr_new)              //Используем  данные указатели на девайсе
 			{
 				status = cublasDaxpy(handler, size, &alpha, arr_new, 1, arr, 1);
 				status = cublasIdamax(handler, size, arr, 1, &idx);
 			}
 
-#pragma acc update host(arr[idx - 1]) 
+#pragma acc update host(arr[idx - 1])        //выгружаем значение максимума с девайса на хост
 			error = abs(arr[idx - 1]);
 
-#pragma acc host_data use_device(arr, arr_new)
+#pragma acc host_data use_device(arr, arr_new)    
 			status = cublasDcopy(handler, size, arr_new, 1, arr, 1);
 		}
 
@@ -86,10 +86,6 @@ int main(int argc, char** argv) {
 	}
 	printf("%0.15lf, %d\n", error, iter);
 	
-	
-	
-
-
 	free(arr);
 	free(arr_new);
 	cublasDestroy(handler);
